@@ -1,0 +1,64 @@
+S -> Name
+
+Name  -> Wil | Bert | Helm | Fred | Fried | E | Mann | Hu | A | I | K | El | Diet | Schwert | Gott
+
+Wil   -> "wil" WilStep
+WilStep -> Helm | Bert | "bur" | "libald" | Fred | Fried
+Bert  -> "bert" BertStep
+BertStep -> € | "en" | "old" | "us" | "ha"
+Helm  -> "helm" HelmStep
+HelmStep -> € | Ut | E
+Fred  -> "fred" FredStep
+FredStep -> € | E
+Fried -> "fried" FriedStep
+FriedStep -> € | E | Bert | " stutz"
+Ut    -> "ut" UtStep
+UtStep -> € | "h"
+E     -> "e" EStep
+EStep -> € | "rich" | "rick" | Mann | Bald | "n"
+Mann  -> "mann" MannStep
+MannStep -> € | Mann | Fred | Fried
+Bald  -> "bald" BaldStep
+BaldStep -> € | "t"
+Hu    -> "hu" HuStep
+HuStep -> Bald | Bert | Mann | "rtig"
+A     -> "a" AStep
+AStep -> Den | Do | Rn | Del | L
+Rn    -> "rn" RnStep
+RnStep -> "ulf" | "abalf"
+Do    -> "do" DoStep
+DoStep -> L | Lf
+Del   -> "del" DelStep
+DelStep -> Haid | Heid | Bert
+L     -> "l" LStep
+LStep -> Fred | Fried | "fons" | Bert
+Lf    -> "lf" LfStep
+LfStep -> € | "erin" | "er"
+Haid  -> "haid" HaidStep
+HaidStep -> € | "e" | "en"
+Heid  -> "heid" HeidStep
+HeidStep -> HaidStep
+I     -> "i" IStep
+IStep -> Bald | "lma" | Rm
+Rm    -> "rm" RmStep
+RmStep -> "a" | Gard
+K     -> "k" KStep
+KStep -> Arl | On | Unigund
+Arl   -> "arl" ArlStep
+ArlStep -> € | Mann
+On    -> "on" OnStep
+OnStep -> "rad" | I
+Unigund -> "unigund" UnigundStep
+UnigundStep -> "a" | E | "us" | €
+Gard  -> "gard" GardStep
+GardStep -> € | "t"
+El -> "el" ElStep
+ElStep -> E | "mar"
+Diet -> "diet" DietStep
+DietStep -> "er" | E | Bald | Helm
+Schwert -> "schwert" SchwertStep
+SchwertStep -> E | Helm | "muth"
+Gott -> "gott" GottStep
+GottStep -> "hold" | "huld" | "hard" | "hurd" | "hourd" | Fred | Fried | Helm
+Den -> "den" DenStep
+DenStep -> "hurd" | "hourd" | Bald | Bert | "bart" | Schwert
