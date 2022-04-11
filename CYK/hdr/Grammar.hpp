@@ -24,13 +24,14 @@ namespace cfg {
     using Rule = std::vector<Symbol>;
     using Grammar = std::map<Nonterminal, std::vector<Rule>>;
 
+    std::map<Nonterminal, bool> getTerminateMap(const Grammar &g);
     void removeUselessRules(Grammar &g);
 
     class GrammarManager {
 
     private:
 
-        static constexpr unsigned MAX_RECURSION = 20;
+        static constexpr unsigned MAX_RECURSION = 50;
         static const std::string START_SYMBOL;
 
         static constexpr double RANDGEN_START = 0.8;

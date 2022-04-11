@@ -29,140 +29,208 @@ namespace cfg {
 
     const std::string GrammarManager::START_SYMBOL = "S";
 
-    void removeUselessRules(Grammar &g) {
+    std::map<Nonterminal, bool> getTerminateMap(const Grammar &g) {
 
-        // mark all rules with a) no productions, or b) only self-replicating productions
-            
-        std::map<Nonterminal, bool> to_remove;
-        for (auto &it : g) {
-            to_remove[it.first] = true;
+        std::map<Nonterminal, bool> called, known, termination_map;
+        for (const auto &it : g) {
+            called[it.first] = known[it.first] = termination_map[it.first] = false;
         }
 
-        for (auto &it : g) {
-            for (const Rule &r : it.second) {
-                if (r.empty()) { // -> € rule
-                    to_remove.at(it.first) = false;
-                    break;
-                }
+        std::function<bool(const Symbol &s)> term = [&] (const Symbol &s) -> bool {
+            if (s.isTerminal) { return true; }
 
-                for (const Symbol &s : r) {
-                    if (s.isTerminal || s.n != it.first) {
-                        to_remove.at(it.first) = false;
+            Nonterminal n = s.n;
+
+            if (called.at(n)) { return false; }
+            if (known.at(n)) { return termination_map.at(n); }
+
+            termination_map.at(n) = false;
+            called.at(n) = true;
+
+            for (const Rule &rule : g.at(n)) {
+                bool success = true;
+                for (const Symbol &sym : rule) {
+                    if (!term(sym)) {
+                        success = false;
                         break;
                     }
                 }
 
-                if (!to_remove.at(it.first)) { break; }
+                if (success) {
+                    termination_map.at(n) = true;
+                    break;
+                }
             }
+
+            known.at(n) = true;
+            called.at(n) = false;
+            return termination_map.at(n);
+        };
+
+        for (const auto &it : g) {
+            term({ false, { .n = it.first } });
         }
 
-        // remove all entirely self-replicating rules, and the productions which call them, and
-        // the rules which become pointless as a result by clearing their productions (recursively)
+        return termination_map;
+    }
 
-        bool change;
-        do {
-            change = false;
+    void removeUselessRules(Grammar &g) {
 
-            for (auto &it : g) {
-                if (!to_remove.at(it.first)) {
-                    // mark nonterminals with no productions for removal
-                    if (it.second.empty()) {
-                        to_remove.at(it.first) = true;
-                        change = true;
-                        continue;
+        auto step = [] (const Grammar &g) -> Grammar {
+            Grammar res = g;
+
+            // mark all rules with a) no productions, or b) only self-replicating productions
+                
+            std::map<Nonterminal, bool> to_remove;
+            for (auto &it : res) {
+                to_remove[it.first] = true;
+            }
+
+            for (auto &it : res) {
+                for (const Rule &r : it.second) {
+                    if (r.empty()) { // -> € rule
+                        to_remove.at(it.first) = false;
+                        break;
                     }
 
-                    // remove productions which contain an marked nonterminal
-                    std::vector<Rule> &rules = g.at(it.first);
-                    for (unsigned i = 0; i < rules.size(); i++) {
-                        if (!rules.at(i).empty() && std::find_if(rules.at(i).begin(), rules.at(i).end(),
-                                [&to_remove] (const Symbol &s) -> bool { return !s.isTerminal && to_remove.at(s.n); }) 
-                                != rules.at(i).end()) {
-                            rules.erase(rules.begin() + i);
-                            i--;
-                            change = true;
+                    for (const Symbol &s : r) {
+                        if (s.isTerminal || s.n != it.first) {
+                            to_remove.at(it.first) = false;
+                            break;
                         }
                     }
+
+                    if (!to_remove.at(it.first)) { break; }
                 }
             }
 
-        } while (change);
+            // mark all rules that do not terminate for removal
 
-        // remove all marked nonterminals without side-effects
-        for (auto it = g.begin(); it != g.end(); ) {
-            if (it->first != S && to_remove.at(it->first)) {
-                it = g.erase(it);
-            } else {
-                ++it;
-            }
-        }
-
-        // mark all reachable rules via BFS
-
-        std::map<Nonterminal, bool> reachable;
-        for (auto &it : g) {
-            reachable[it.first] = false;
-        }
-
-        std::deque<Nonterminal> q = { S };
-        while (!q.empty()) {
-            Nonterminal n = q.front();
-            q.pop_front();
-
-            if (reachable.at(n)) {
-                continue;
-            }
-            reachable.at(n) = true;
-
-            for (const Rule &r : g.at(n)) {
-                for (const Symbol &s : r) {
-                    if (!s.isTerminal) {
-                        q.push_back(s.n);
-                    }
+            std::map<Nonterminal, bool> termination_map = getTerminateMap(g);
+            for (auto &it : termination_map) {
+                if (!it.second) {
+                    to_remove.at(it.first) = true;
                 }
             }
-        }
 
-        // remove all non-reachable rules
-        for (auto &it : reachable) {
-            if (!it.second) {
-                g.erase(it.first);
-            }
-        }
+            // remove all entirely self-replicating rules, and the productions which call them, and
+            // the rules which become pointless as a result by clearing their productions (recursively)
 
-        // eliminate duplicate rules
-        for (auto &it : g) {
-            std::vector<Rule> &rules = it.second;
-            for (unsigned i = 0; i < rules.size(); i++) {
-                for (unsigned j = i + 1; j < rules.size(); j++) {
-                    if (rules.at(i) == rules.at(j)) {
-                        rules.erase(rules.begin() + j);
-                    }
-                }
-            }
-        }
+            bool change;
+            do {
+                change = false;
 
-        // eliminate rules with identical production sets
-        for (auto it = g.begin(); it != g.end(); ++it) {
-            for (auto next = std::next(it); next != g.end(); ) {
-                if (it->second == next->second && next->first != S) {
-                    Nonterminal n = it->first, m = next->first;
-                    next = g.erase(next);
-                    for (auto &p : g) {
-                        for (Rule &r : p.second) {
-                            for (Symbol &s : r) {
-                                if (!s.isTerminal && s.n == m) {
-                                    s.n = n;
-                                }
+                for (auto &it : res) {
+                    if (!to_remove.at(it.first)) {
+                        // mark nonterminals with no productions for removal
+                        if (it.second.empty()) {
+                            to_remove.at(it.first) = true;
+                            change = true;
+                            continue;
+                        }
+
+                        // remove productions which contain an marked nonterminal
+                        std::vector<Rule> &rules = res.at(it.first);
+                        for (unsigned i = 0; i < rules.size(); i++) {
+                            if (!rules.at(i).empty() && std::find_if(rules.at(i).begin(), rules.at(i).end(),
+                                    [&to_remove] (const Symbol &s) -> bool { return !s.isTerminal && to_remove.at(s.n); }) 
+                                    != rules.at(i).end()) {
+                                rules.erase(rules.begin() + i);
+                                i--;
+                                change = true;
                             }
                         }
                     }
-                    change = true;
+                }
+
+            } while (change);
+
+            // remove all marked nonterminals without side-effects
+            for (auto it = res.begin(); it != res.end(); ) {
+                if (it->first != S && to_remove.at(it->first)) {
+                    it = res.erase(it);
                 } else {
-                    ++next;
+                    ++it;
                 }
             }
-        }
+
+            // mark all reachable rules via BFS
+
+            std::map<Nonterminal, bool> reachable;
+            for (auto &it : res) {
+                reachable[it.first] = false;
+            }
+
+            std::deque<Nonterminal> q = { S };
+            while (!q.empty()) {
+                Nonterminal n = q.front();
+                q.pop_front();
+
+                if (reachable.at(n)) {
+                    continue;
+                }
+                reachable.at(n) = true;
+
+                for (const Rule &r : res.at(n)) {
+                    for (const Symbol &s : r) {
+                        if (!s.isTerminal) {
+                            q.push_back(s.n);
+                        }
+                    }
+                }
+            }
+
+            // remove all non-reachable rules
+            for (auto &it : reachable) {
+                if (!it.second) {
+                    res.erase(it.first);
+                }
+            }
+
+            // eliminate duplicate rules
+            for (auto &it : res) {
+                std::vector<Rule> &rules = it.second;
+                for (unsigned i = 0; i < rules.size(); i++) {
+                    for (unsigned j = i + 1; j < rules.size(); j++) {
+                        if (rules.at(i) == rules.at(j)) {
+                            rules.erase(rules.begin() + j);
+                        }
+                    }
+                }
+            }
+
+            // eliminate rules with identical production sets
+            for (auto it = res.begin(); it != res.end(); ++it) {
+                for (auto next = std::next(it); next != res.end(); ) {
+                    if (it->second == next->second && next->first != S) {
+                        Nonterminal n = it->first, m = next->first;
+                        next = res.erase(next);
+                        for (auto &p : res) {
+                            for (Rule &r : p.second) {
+                                for (Symbol &s : r) {
+                                    if (!s.isTerminal && s.n == m) {
+                                        s.n = n;
+                                    }
+                                }
+                            }
+                        }
+                        change = true;
+                    } else {
+                        ++next;
+                    }
+                }
+            }
+
+            return res;
+        };
+
+        do {
+            Grammar _g = step(g);
+            if (_g == g) {
+                break;
+            }
+            g = _g;
+        } while (true);
     }
 
     Nonterminal GrammarManager::addNonterminal(const std::string &name) {
@@ -350,6 +418,7 @@ namespace cfg {
             if (s.isTerminal) { return true; }
 
             Nonterminal n = s.n;
+
             if (called.at(n)) { return false; }
             if (known.at(n)) { return termination_map.at(n); }
 
@@ -408,10 +477,10 @@ namespace cfg {
             throw std::runtime_error("Non-terminating Grammar.");
         }
 
-        for (const auto &rule : g) {
-            called[rule.first] = false;
-            known[rule.first] = false;
-            terminating_paths[rule.first] = UINT_MAX;
+        for (const auto &it : g) {
+            called[it.first] = false;
+            known[it.first] = false;
+            terminating_paths[it.first] = UINT_MAX;
         }
 
         std::function<unsigned(Nonterminal)> intermediate = [&] (Nonterminal n) -> unsigned {
@@ -446,13 +515,13 @@ namespace cfg {
         for (const auto &u : g) {
             intermediate(u.first);
         }
-        
-        terminates();
+
+        /*terminates();
         for (const auto &u : g) {
             if (!termination_map.at(u.first)) {
                 std::cerr << "Nonterminal " << u.first << " doesn't terminate.\n";
             }
-        }
+        }*/
     }
 
     std::string GrammarManager::debugInfo() {
