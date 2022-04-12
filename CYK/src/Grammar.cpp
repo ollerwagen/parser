@@ -27,6 +27,17 @@ namespace cfg {
         return true;
     }
 
+    std::vector<Terminal> toTerminals(const std::string &s) {
+        std::vector<Terminal> res;
+        res.resize(s.length());
+
+        for (unsigned i = 0; i < s.length(); i++) {
+            res.at(i) = s.at(i);
+        }
+
+        return res;
+    }
+
     const std::string GrammarManager::START_SYMBOL = "S";
 
     std::map<Nonterminal, bool> getTerminateMap(const Grammar &g) {

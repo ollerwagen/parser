@@ -24,10 +24,14 @@ namespace cfg {
     using Rule = std::vector<Symbol>;
     using Grammar = std::map<Nonterminal, std::vector<Rule>>;
 
+    std::vector<Terminal> toTerminals(const std::string &s);
+
     std::map<Nonterminal, bool> getTerminateMap(const Grammar &g);
     void removeUselessRules(Grammar &g);
 
     class GrammarManager {
+
+        friend class CYKParser;
 
     private:
 

@@ -1,4 +1,5 @@
-# { Palindrome über dem binären Alphabet }
+S -> A B C
 
-S -> A
-A -> '0' | '1' | '0' A '0' | '1' A '1'
+A -> 'a' | A A
+B -> 'b' | B B
+C -> 'c' | C C

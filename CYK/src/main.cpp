@@ -2,6 +2,7 @@
 #include <cstdlib>
 #include <iostream>
 
+#include "CYKParser.hpp"
 #include "Grammar.hpp"
 
 using namespace cfg;
@@ -10,7 +11,22 @@ int main(int argc, char **argv) {
 
     srand(std::chrono::system_clock::now().time_since_epoch().count());
 
-    GrammarManager gm;
+    if (argc <= 1) {
+        return 1;
+    }
+
+    CYKParser parser;
+    parser.initGrammar(argv[1]);
+
+    std::string line;
+
+    do {
+        std::getline(std::cin, line);
+        std::cout << "Parse: " << (parser.parseInput(toTerminals(line)) ? "" : "un") <<
+            "successful.\n";
+    } while (!line.empty());
+
+    /*GrammarManager gm;
     int repetitions = 1;
 
     if (argc > 1) {
@@ -39,7 +55,7 @@ int main(int argc, char **argv) {
         for (int i = 0; i < repetitions; i++) {
             std::cout << gmcnf.randGen() << "\n";
         }
-    }
+    }*/
 
     return 0;
 }
