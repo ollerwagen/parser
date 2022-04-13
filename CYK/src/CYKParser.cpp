@@ -83,7 +83,8 @@ namespace cfg {
                     for (const Nonterminal &na : vi) {
                         for (const Nonterminal &nb : vj) {
                             for (const auto &it : gm.g) {
-                                if (contains(it.second, Rule{ Symbol{ false, {.n = na } }, Symbol{ false, { .n = nb } } })) {
+                                Rule r = { Symbol{ false, { .n = na } }, Symbol{ false, { .n = nb } } };
+                                if (contains(it.second, r) && !contains(DP.at(i).at(j), it.first)) {
                                     DP.at(i).at(j).push_back(it.first);
                                 }
                             }

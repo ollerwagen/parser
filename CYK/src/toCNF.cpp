@@ -223,31 +223,35 @@ namespace cfg {
 
     static void eliminateUnitRules(Grammar &g) {
 
-        bool change;
-        do {
-            change = false;
-            for (auto &it : g) {
-                std::vector<Rule> &rules = it.second;
-                for (unsigned i = 0; i < rules.size(); i++) {
-                    // remove rules of the form A -> A
-                    if (rules.at(i) == Rule{ Symbol{ false, { .n = it.first} } }) {
-                        rules.erase(rules.begin() + i);
-                        i--, change = true;
-                    }
+        std::map<Nonterminal, bool> called, done;
+        for(const auto &it : g) {
+            called[it.first] = done[it.first] = false;
+        }
 
-                    // refine rules of the form A -> B
-                    if (rules.at(i).size() == 1 && !rules.at(i).front().isTerminal) {
-                        for (const Rule &r : g.at(rules.at(i).front().n)) {
-                            rules.push_back(r);
-                        }
-                        rules.erase(rules.begin() + i);
-                        i--, change = true;
-                    }
-                }
+        std::function<void(Nonterminal)> elim = [&] (Nonterminal n) -> void {
+
+            if (called.at(n) || done.at(n)) {
+                return;
             }
 
-        } while (change);
+            std::vector<Rule> &rules = g.at(n);
+            unsigned size = rules.size();
+            for (unsigned i = 0; i < size; i++) {
+                if (rules.at(i).size() == 1 && !rules.at(i).front().isTerminal) {
+                    if (rules.at(i).front().n != n) {
+                        elim(rules.at(i).front().n);
+                        std::vector<Rule> newrules = g.at(rules.at(i).front().n);
+                        rules.insert(rules.end(), newrules.begin(), newrules.end());
+                    }
+                    rules.erase(rules.begin() + i);
+                    i--;
+                }
+            }
+        };
 
+        for (auto &it : g) {
+            elim(it.first);
+        }
         removeUselessRules(g);
     }
 

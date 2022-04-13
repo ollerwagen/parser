@@ -1,113 +1,64 @@
-!! 0.5
+!! 0.2
 
-S -> StmtList "main" Whitespace "{" Whitespace StmtList Whitespace "}" StmtList
+S -> StmtList | Expr
 
 StmtList -> € | Stmt StmtList
 
-Stmt -> PrintStmt
-Stmt -> IfStmt | Block | WhileStmt | DowhileStmt | ForStmt | AssignStmt
-Stmt *> DeclStmt
+Stmt -> ExprList Sc | Print Sc | Block | If
 
-PrintStmt -> "print" Whitespace "(" Expr ")" Whitespace ";"
-IfStmt -> "if" CondStmt ElifElse
-Block -> "{" Whitespace StmtList Whitespace "}"
-WhileStmt -> "while" Whitespace "(" Expr ")" Stmt
-DowhileStmt -> "do" Space Stmt Whitespace "while" Whitespace "(" Expr ")" Stmt
-ForStmt -> "for" Whitespace "(" FirstFor Expr ";" Expr ")" Stmt
-AssignStmt -> NameAtom Whitespace ":=" Expr ";"
-DeclStmt -> "let " Whitespace Mutable Id MaybeDefinition ";"
+Block -> LBrace StmtList RBrace
+Print -> "print" LParen Expr RParen
+ExprList -> € | ExprNEList
+If -> "if" LParen Expr RParen Stmt OptElse
 
-ElifElse -> € | "elif" CondStmt ElifElse | "else" Whitespace Stmt
-CondStmt -> Whitespace "(" Expr ")" Stmt
+OptElse -> € | "else" Stmt
+ExprNEList -> Expr | Expr "," ExprNEList
 
-FirstFor -> Expr | AssignStmt
+Type -> Signedness Longness "int" V | Signedness Longness "char" V | V "float" V | Longness "double" V 
+Signedness -> V "unsigned" V | V "signed" V | €
+Longness -> V "long" V | V "long" W "long" V | €
 
-Mutable -> € | "mut " Whitespace
-MaybeDefinition -> € | Whitespace ":=" Expr
-
-Expr *> Bin
 Expr -> Ternary
 
-Ternary -> Bin "?" Expr ":" Expr
+Ternary -> Bin | Bin QMark Expr Colon Expr
 
-Bin -> Bin9
+Bin -> Bin2
 
-Bin0 *> Un
-Bin0 -> Un "**" Bin0
+Bin2 -> Bin1 | Bin1 Bin2Op Bin2
+Bin2Op -> V "+" V | V "-" V
 
-Bin1 *> Bin0
-Bin1 -> Bin0 "*" Bin1 | Bin0 "/" Bin1 | Bin0 "%" Bin1
+Bin1 -> Bin0 | Bin0 Bin1Op Bin1
+Bin1Op -> V "*" V | V "/" V | V "%" V
 
-Bin2 *> Bin1
-Bin2 -> Bin1 "+" Bin2 | Bin1 "-" Bin2
+Bin0 -> Un | Un Bin0Op Bin0
+Bin0Op -> V "**" V
 
-Bin3 *> Bin2
-Bin3 -> Bin2 "<<" Bin3 | Bin2 ">>" Bin3 | Bin2 ">>>" Bin3
+Un -> Atom | UnOp Un
+UnOp -> V "+" V | V "-" V
 
-Bin4 *> Bin3
-Bin4 -> Bin3 "&" Bin4
+Atom -> V Number V | V Variable V | LParen Expr RParen | Call | Subscript
 
-Bin5 *> Bin4
-Bin5 -> Bin4 "^" Bin5
+Call -> Atom LParen ExprList RParen
+Subscript -> Atom LBrack Expr RBrack
 
-Bin6 *> Bin5
-Bin6 -> Bin5 "|" Bin6
+Number -> Digit | Digit Number
+Digit -> "0" | "1" | "2" | "3" | "4" | "5" | "6" | "7" | "8" | "9"
 
-Bin7 *> Bin6
-Bin7 -> Bin6 "<=>" Bin7
+Variable -> Character | Character Variable
+Character -> "a" | "b" | "c" | "d" | "e" | "f" | "g" | "h" | "i" | "j" | "k" | "l" | "m"
+Character -> "n" | "o" | "p" | "q" | "r" | "s" | "t" | "u" | "v" | "w" | "x" | "y" | "z"
 
-CList *> Bin7
-CList -> Bin7 Cmp
+LParen -> V "(" V
+RParen -> V ")" V
+LBrack -> V "[" V
+RBrack -> V "]" V
+LBrace -> V "{" V
+RBrace -> V "}" V
 
-Cmp -> Cmp Cmp
-Cmp *> CmpOp Bin7
-CmpOp -> "===" | "!==" | "==" | "!=" | ">" | "<" | ">=" | "<="
+Sc -> V ";" V
 
-Bin8 *> CList
-Bin8 -> CList "&&" Bin8
+QMark -> V "?" V
+Colon -> V ":" V
 
-Bin9 *> Bin8
-Bin9 -> Bin8 "||" Bin9
-
-Un *> Atom
-Un -> "!" Un | "+" Un | "-" Un | "~" Un
-
-Atom *> Whitespace Id Whitespace | Number
-Atom -> NameAtom | "(" Expr ")" | Array | Tuple | Map
-
-Array -> "[" ArrList "]"
-Tuple -> "[" TupList "]"
-Map -> "[" MapList "]"
-
-ArrList *> €
-ArrList -> NArrList
-NArrList -> Expr | Expr "," NArrList
-
-TupList -> Expr | Expr ";" TupList
-MapList -> Expr "->" Expr | Expr "->" Expr "," MapList
-
-NameAtom *> Whitespace Id Whitespace
-NameAtom -> NameAtom "[" Expr "]" | NameAtom "(" CallList ")"
-
-CallList *> € | Expr
-CallList -> Expr "," CallList
-
-Number -> NonZeroDigit DigitList
-NonZeroDigit -> '1' | '2' | '3' | '4' | '5' | '6' | '7' | '8' | '9'
-DigitList -> € | Digit DigitList
-
-Id -> Character EmptyId
-
-EmptyId -> €
-EmptyId -> Character EmptyId
-EmptyId -> Digit EmptyId
-
-Character -> 'a' | 'b' | 'c' | 'd' | 'e' | 'f' | 'g' | 'h' | 'i' | 'j' | 'k' | 'l' | 'm'
-Character -> 'n' | 'o' | 'p' | 'q' | 'r' | 's' | 't' | 'u' | 'v' | 'w' | 'x' | 'y' | 'z'
-
-Digit -> '0' | '1' | '2' | '3' | '4' | '5' | '6' | '7' | '8' | '9'
-
-Space -> ' ' Whitespace
-
-Whitespace *> €
-Whitespace -> ' ' Whitespace
+V -> € | W
+W -> ' ' | ' ' W

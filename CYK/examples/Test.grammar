@@ -1,6 +1,8 @@
-S       -> Expr
-Expr    -> Atom | Atom '+' Expr | Atom '-' Expr
-Atom    -> Number | '(' Expr ')'
+S -> Expr
 
-Number  -> Digit | Digit Number
-Digit   -> '0' | '1' | '2' | '3' | '4' | '5' | '6' | '7' | '8' | '9'
+Expr -> Unary | Unary "+" Expr | Unary "-" Expr
+Unary -> Atom | "-" Unary
+Atom -> Number | "(" Expr ")"
+
+Number -> Digit | Digit Number
+Digit -> "0" | "1" | "2" | "3" | "4" | "5" | "6" | "7" | "8" | "9"

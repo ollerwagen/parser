@@ -235,13 +235,13 @@ namespace cfg {
             return res;
         };
 
-        do {
+        /*do {
             Grammar _g = step(g);
             if (_g == g) {
                 break;
             }
             g = _g;
-        } while (true);
+        } while (true);*/
     }
 
     Nonterminal GrammarManager::addNonterminal(const std::string &name) {
