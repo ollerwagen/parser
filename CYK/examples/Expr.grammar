@@ -4,15 +4,26 @@ S -> StmtList | Expr
 
 StmtList -> € | Stmt StmtList
 
-Stmt -> ExprList Sc | Print Sc | Block | If
+Stmt -> ExprList Sc | Print Sc | Block | If | Decl Sc | For | While | Dowhile Sc | FHead Sc | FHead Block | Return Sc
 
 Block -> LBrace StmtList RBrace
 Print -> "print" LParen Expr RParen
 ExprList -> € | ExprNEList
 If -> "if" LParen Expr RParen Stmt OptElse
+Decl -> Type PDots Identifier | Type PDots Identifier V "=" Expr
+For -> "for" LParen For1 Sc Expr Sc Expr RParen Stmt
+While -> "while" LParen Expr RParen Stmt
+Dowhile -> "do" Stmt "while" LParen Expr RParen
+FHead -> Identifier W Identifier LParen Arglist RParen
+Return -> "return" W Expr | "return"
 
 OptElse -> € | "else" Stmt
 ExprNEList -> Expr | Expr "," ExprNEList
+For1 -> Decl | Expr
+PDots -> € | V "*" V PDots
+
+Arglist -> € | ArglistNE | V "void" V
+ArglistNE -> Type W Identifier | Type W Identifier "," ArglistNE
 
 Type -> Signedness Longness "int" V | Signedness Longness "char" V | V "float" V | Longness "double" V 
 Signedness -> V "unsigned" V | V "signed" V | €
@@ -34,9 +45,9 @@ Bin0 -> Un | Un Bin0Op Bin0
 Bin0Op -> V "**" V
 
 Un -> Atom | UnOp Un
-UnOp -> V "+" V | V "-" V
+UnOp -> V "+" V | V "-" V | V "*" V
 
-Atom -> V Number V | V Variable V | LParen Expr RParen | Call | Subscript
+Atom -> V Number V | V Identifier V | LParen Expr RParen | Call | Subscript | Atom "->" Identifier | Atom "." Identifier | LParen Identifier RParen Atom
 
 Call -> Atom LParen ExprList RParen
 Subscript -> Atom LBrack Expr RBrack
@@ -44,7 +55,7 @@ Subscript -> Atom LBrack Expr RBrack
 Number -> Digit | Digit Number
 Digit -> "0" | "1" | "2" | "3" | "4" | "5" | "6" | "7" | "8" | "9"
 
-Variable -> Character | Character Variable
+Identifier -> Character | Character Identifier
 Character -> "a" | "b" | "c" | "d" | "e" | "f" | "g" | "h" | "i" | "j" | "k" | "l" | "m"
 Character -> "n" | "o" | "p" | "q" | "r" | "s" | "t" | "u" | "v" | "w" | "x" | "y" | "z"
 

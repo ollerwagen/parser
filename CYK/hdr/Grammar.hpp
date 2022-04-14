@@ -32,6 +32,7 @@ namespace cfg {
     class GrammarManager {
 
         friend class CYKParser;
+        friend class EarleyParser;
 
     private:
 

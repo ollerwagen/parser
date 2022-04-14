@@ -1,0 +1,26 @@
+S -> V Stm V
+
+Stm -> V 'skip' V | Var ':=' Aexp | '(' Stm ';' Stm ')' | 'if' Bexp 'then' Stm 'else' Stm 'end' | 'while' Bexp 'do' Stm 'end'
+
+Aexp -> V '(' Aexp Op Aexp ')' V | Var | Numeral | V '(' Aexp ')' V
+Bexp -> V '(' Bexp 'or' Bexp ')' V | V '(' Bexp 'and' Bexp ')' V | V 'not' Bexp | Aexp Rop Aexp | V '(' Bexp ')' V
+
+Op -> V '+' V | V '-' V | V '*' V
+Rop -> V '=' V | V '#' V | V '<' V | V '<=' V | V '>' V | V '>=' V
+
+Numeral -> V Num V
+Var -> V Ident V
+
+Num -> Digit | Digit Num
+Ident -> Letter SubIdList
+SubIdList -> € | Digit SubIdList | Letter SubIdList
+
+Letter -> 'a' | 'b' | 'c' | 'd' | 'e' | 'f' | 'g' | 'h' | 'i' | 'j' | 'k' | 'l' | 'm'
+Letter -> 'n' | 'o' | 'p' | 'q' | 'r' | 's' | 't' | 'u' | 'v' | 'w' | 'x' | 'y' | 'z'
+Letter -> 'A' | 'B' | 'C' | 'D' | 'E' | 'F' | 'G' | 'H' | 'I' | 'J' | 'K' | 'L' | 'M'
+Letter -> 'N' | 'O' | 'P' | 'Q' | 'R' | 'S' | 'T' | 'U' | 'V' | 'W' | 'X' | 'Y' | 'Z'
+
+Digit -> '0' | '1' | '2' | '3' | '4' | '5' | '6' | '7' | '8' | '9'
+
+V -> € | W
+W -> ' ' | ' ' W

@@ -1,7 +1,7 @@
 S -> Expr
 
 Expr -> Unary | Unary "+" Expr | Unary "-" Expr
-Unary -> Atom | "-" Unary
+Unary -> Atom | "-" Unary | "+" Atom
 Atom -> Number | "(" Expr ")"
 
 Number -> Digit | Digit Number

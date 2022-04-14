@@ -1,0 +1,10 @@
+consider the following CFG:
+
+S -> Expr
+Expr -> Atom | Atom "+" Expr | Atom "-" Expr
+Atom -> <digit> | "(" Expr ")"
+
+use Earley to parse the following correct input:
+> "9+(2-0-3)
+
+

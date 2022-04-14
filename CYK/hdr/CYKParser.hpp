@@ -1,10 +1,11 @@
 #pragma once
 
 #include "Grammar.hpp"
+#include "Parser.hpp"
 
 namespace cfg {
 
-    class CYKParser {
+    class CYKParser : public Parser {
 
     private:
 
@@ -14,8 +15,8 @@ namespace cfg {
 
         CYKParser();
 
-        void initGrammar(const std::string &filename);
-        bool parseInput(const std::vector<Terminal> &input);
+        virtual void initGrammar(const std::string &filename);
+        virtual bool parseInput(const std::vector<Terminal> &input);
     };
 
 } // namespace cfg
