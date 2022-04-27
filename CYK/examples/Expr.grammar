@@ -1,75 +1,31 @@
 !! 0.2
 
-S -> StmtList | Expr
+S -> Expr
 
-StmtList -> € | Stmt StmtList
+Expr -> Unary
 
-Stmt -> ExprList Sc | Print Sc | Block | If | Decl Sc | For | While | Dowhile Sc | FHead Sc | FHead Block | Return Sc
+Unary -> Atom | UnaryOp Unary
+Atom -> LParen Expr RParen | Identifier | Number
 
-Block -> LBrace StmtList RBrace
-Print -> "print" LParen Expr RParen
-ExprList -> € | ExprNEList
-If -> "if" LParen Expr RParen Stmt OptElse
-Decl -> Type PDots Identifier | Type PDots Identifier V "=" Expr
-For -> "for" LParen For1 Sc Expr Sc Expr RParen Stmt
-While -> "while" LParen Expr RParen Stmt
-Dowhile -> "do" Stmt "while" LParen Expr RParen
-FHead -> Identifier W Identifier LParen Arglist RParen
-Return -> "return" W Expr | "return"
+Identifier -> V Character SubIdCharList V
+Number -> V Digit SubNumDigitList V
 
-OptElse -> € | "else" Stmt
-ExprNEList -> Expr | Expr "," ExprNEList
-For1 -> Decl | Expr
-PDots -> € | V "*" V PDots
+SubIdCharList -> € | Character SubIdCharList | Digit SubIdCharList
+SubNumDigitList -> € | Digit SubNumDigitList
 
-Arglist -> € | ArglistNE | V "void" V
-ArglistNE -> Type W Identifier | Type W Identifier "," ArglistNE
+UnaryOp -> Minus | Plus
 
-Type -> Signedness Longness "int" V | Signedness Longness "char" V | V "float" V | Longness "double" V 
-Signedness -> V "unsigned" V | V "signed" V | €
-Longness -> V "long" V | V "long" W "long" V | €
+Character -> 'a' | 'b' | 'c' | 'd' | 'e' | 'f' | 'g' | 'h' | 'i' | 'j' | 'k' | 'l' | 'm'
+Character -> 'n' | 'o' | 'p' | 'q' | 'r' | 's' | 't' | 'u' | 'v' | 'w' | 'x' | 'y' | 'z'
 
-Expr -> Ternary
-
-Ternary -> Bin | Bin QMark Expr Colon Expr
-
-Bin -> Bin2
-
-Bin2 -> Bin1 | Bin1 Bin2Op Bin2
-Bin2Op -> V "+" V | V "-" V
-
-Bin1 -> Bin0 | Bin0 Bin1Op Bin1
-Bin1Op -> V "*" V | V "/" V | V "%" V
-
-Bin0 -> Un | Un Bin0Op Bin0
-Bin0Op -> V "**" V
-
-Un -> Atom | UnOp Un
-UnOp -> V "+" V | V "-" V | V "*" V
-
-Atom -> V Number V | V Identifier V | LParen Expr RParen | Call | Subscript | Atom "->" Identifier | Atom "." Identifier | LParen Identifier RParen Atom
-
-Call -> Atom LParen ExprList RParen
-Subscript -> Atom LBrack Expr RBrack
-
-Number -> Digit | Digit Number
-Digit -> "0" | "1" | "2" | "3" | "4" | "5" | "6" | "7" | "8" | "9"
-
-Identifier -> Character | Character Identifier
-Character -> "a" | "b" | "c" | "d" | "e" | "f" | "g" | "h" | "i" | "j" | "k" | "l" | "m"
-Character -> "n" | "o" | "p" | "q" | "r" | "s" | "t" | "u" | "v" | "w" | "x" | "y" | "z"
+Digit -> '0' | NonZeroDigit
+NonZeroDigit -> '1' | '2' | '3' | '4' | '5' | '6' | '7' | '8' | '9'
 
 LParen -> V "(" V
 RParen -> V ")" V
-LBrack -> V "[" V
-RBrack -> V "]" V
-LBrace -> V "{" V
-RBrace -> V "}" V
 
-Sc -> V ";" V
+Minus -> V "-" V
+Plus -> V "+" V
 
-QMark -> V "?" V
-Colon -> V ":" V
-
-V -> € | W
+V -> € | ' ' V
 W -> ' ' | ' ' W

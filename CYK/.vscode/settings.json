@@ -53,6 +53,8 @@
         "condition_variable": "cpp",
         "ratio": "cpp",
         "regex": "cpp",
-        "shared_mutex": "cpp"
-    }
+        "shared_mutex": "cpp",
+        "iomanip": "cpp"
+    },
+    "C_Cpp.errorSquiggles": "Disabled"
 }

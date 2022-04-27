@@ -1,3 +1,5 @@
+#pragma once
+
 #include "Grammar.hpp"
 
 namespace cfg {

@@ -17,7 +17,7 @@ namespace cfg {
         union { Terminal t; Nonterminal n; };
 
         inline bool operator == (const Symbol &s) const {
-            return isTerminal == s.isTerminal && t == s.t && n == s.n;
+            return isTerminal == s.isTerminal && (isTerminal ? (t == s.t) : (n == s.n));
         }
     };
 
