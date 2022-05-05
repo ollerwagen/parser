@@ -1,0 +1,35 @@
+S     -> Prog
+Prog  -> € | Atom Prog
+
+Atom  -> Shr | Shl | Inc | Dec | Print | Read | Loop
+Atom  -> FuncCall | SysCall | Rand | RelJmp | ProgJmp | Lbl | LblJmp | ParRd | ParWr | ParSwap | ParBring | FltSwap | FltBring | TmpPush | TmpPop | Terminate 
+Atom  -> Stack | FuncDef
+
+Shr   -> ">"
+Shl   -> "<"
+Inc   -> "+"
+Dec   -> "-"
+Print -> "."
+Read  -> ","
+Loop  -> "[" Prog "]"
+
+FuncCall  -> ":"
+SysCall   -> "!"
+Rand      -> "?"
+RelJmp    -> "*"
+ProgJmp   -> "/"
+Lbl       -> ";"
+LblJmp    -> "\\"
+ParRd     -> "_"
+ParWr     -> "|"
+ParSwap   -> "$"
+ParBring  -> "="
+FltSwap   -> "&"
+FltBring  -> "'"
+TmpPush   -> "~"
+TmpPop    -> "^"
+Terminate -> "@"
+
+AnyLine -> € | AnyChar AnyLine
+AnyChar -> 'a' | 'b' | 'c' | 'd' | 'e' | 'f' | 'g' | 'h' | 'i' | 'j' | 'k' | 'l' | 'm'
+AnyChar -> 'n' | 'o' | 'p' | 'q' | 'r' | 's' | 't' | 'u' | 'v' | 'w' | 'x' | 'y' | 'z'

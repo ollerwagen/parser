@@ -1,0 +1,31 @@
+Example:
+
+A     -> "-" A | Ident
+Ident *> <char> | <char> Ident
+
+Consider the following tree:
+
+      A
+      |
+  "-"   A
+        |
+      Ident
+        |
+    "a" Ident
+          |
+      "b" Ident
+            |
+           "c"
+
+Refine this to the following tree by opening up the *> connections
+
+      A
+      |
+  "-"   A
+        |
+      Ident
+        |
+      "abc"
+
+The relation -> means that the nonterminal only ever "sees" that string.
+The relation *> means that in a refined parse tree, the nonterminal sees "through" at least one layer of nonterminals.

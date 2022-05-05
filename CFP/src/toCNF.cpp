@@ -169,7 +169,6 @@ namespace cfg {
             return false;
         };
 
-        removeUselessRules(g);
         while (needStep()) {
             std::map<Nonterminal, bool> nullable_map;
             for (auto &it : g) {
@@ -216,8 +215,6 @@ namespace cfg {
                     }
                 }
             }
-            
-            removeUselessRules(g);
         }
     }
 
@@ -252,7 +249,6 @@ namespace cfg {
         for (auto &it : g) {
             elim(it.first);
         }
-        removeUselessRules(g);
     }
 
     GrammarManager GrammarManager::toCNF() const {
@@ -268,7 +264,7 @@ namespace cfg {
 
         GrammarManager res(g);
         res.nonterminal_maxindex = nonterminal_index;
-        res.randgen_preferred = {};
+        res.fullresolveRules = {};
         return res;
     }
 

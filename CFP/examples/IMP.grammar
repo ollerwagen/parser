@@ -1,5 +1,21 @@
 S -> V Stm V
 
+Stm -> Seq | Subseq
+Subseq -> Skip | Print | Abort | Assign | ParSeq | If | While | Scope | Nd
+
+Seq -> Subseq | Subseq Semicolon | Subseq Semicolon Seq
+
+Skip -> V "skip" V
+Print -> V "print" V
+Abort -> V "abort" V
+Assign -> Identifier AssignOp AExp
+ParSeq -> LParen ParSeqList RParen
+If -> V "if" BExp "then" Stm "end" | V "if" BExp "then" Stm "else" Stm "end"
+While -> V "while" BExp "do" Stm "end"
+Scope -> 
+
+ParSeqList -> Subseq Semicolon Subseq | Subseq Semicolon ParSeqList
+
 Stm -> V 'skip' V | Var ':=' Aexp | '(' Stm ';' Stm ')' | 'if' Bexp 'then' Stm 'else' Stm 'end' | 'while' Bexp 'do' Stm 'end'
 
 Aexp -> V '(' Aexp Op Aexp ')' V | Var | Numeral | V '(' Aexp ')' V

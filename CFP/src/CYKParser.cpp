@@ -9,16 +9,6 @@
 
 namespace cfg {
 
-    template<typename T>
-    static bool contains(const std::vector<T> &v, T n) {
-        for (const T nt : v) {
-            if (n == nt) {
-                return true;
-            }
-        }
-        return false;
-    }
-
     static std::string printDPTable(const std::vector<std::vector<std::vector<Nonterminal>>> &DP) {
         std::stringstream stream;
 

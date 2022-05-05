@@ -4,7 +4,7 @@ Expr -> Unary | Unary "+" Expr | Unary "-" Expr
 Unary -> Atom | "-" Unary | "+" Unary
 Atom -> Number | "(" Expr ")"
 
-Number -> Digit | Digit Number
+Number *> Digit | Digit Number
 Digit -> "0" | "1"
 
 W -> " " | " " W

@@ -5,12 +5,24 @@
 #include <tuple>
 #include <vector>
 
+#include "Lexer.hpp"
+
 namespace cfg {
+
+    template<typename T>
+    inline bool contains(const std::vector<T> &vec, const T &v) {
+        for (const T &t : vec) {
+            if (t == v) {
+                return true;
+            }
+        }
+        return false;
+    }
 
     using Terminal = char;
     using Nonterminal = unsigned;
 
-    constexpr Nonterminal S = 0;
+    constexpr Nonterminal S = 0, ROOT = -1, FAIL = -2;
 
     struct Symbol {
         bool isTerminal;
@@ -24,10 +36,18 @@ namespace cfg {
     using Rule = std::vector<Symbol>;
     using Grammar = std::map<Nonterminal, std::vector<Rule>>;
 
+    using Symbols = std::vector<Symbol>;
+    using String = std::vector<Terminal>;
+
+    struct ProductionTree {
+        Nonterminal from;
+        Rule rule;
+        std::vector<ProductionTree> subtrees;
+    };
+
     std::vector<Terminal> toTerminals(const std::string &s);
 
     std::map<Nonterminal, bool> getTerminateMap(const Grammar &g);
-    void removeUselessRules(Grammar &g);
 
     class GrammarManager {
 
@@ -36,18 +56,12 @@ namespace cfg {
 
     private:
 
-        static constexpr unsigned MAX_RECURSION = 50;
         static const std::string START_SYMBOL;
-
-        static constexpr double RANDGEN_START = 0.8;
-
-        double randgen_preferred = RANDGEN_START;
 
     private:
 
-        Grammar g, preferred_rules;
+        Grammar g, fullresolveRules, deleteRules;
 
-        std::map<Nonterminal, unsigned> terminating_paths;
         std::map<Nonterminal, bool> termination_map;
 
         std::map<std::string, Nonterminal> nonterminal_index_map;
@@ -56,7 +70,7 @@ namespace cfg {
     private:
 
         Nonterminal addNonterminal(const std::string &name);
-        std::vector<std::tuple<bool, Nonterminal, Rule>> parseProductionRule(const std::string &line);
+        std::vector<std::tuple<Token::Type, Nonterminal, Rule>> parseProductionRule(const std::string &line);
 
         std::string getNonterminalName(Nonterminal n) const;
 
@@ -76,12 +90,11 @@ namespace cfg {
         bool terminates();
         std::pair<bool, std::string> checkGrammar();
 
-        void findTerminatingPath();
-
         GrammarManager toCNF() const;
 
+        ProductionTree refineTree(const ProductionTree &tree);
+
         std::string debugInfo();
-        std::string randGen(Nonterminal n = S, unsigned recursionDepth = 1);
     };
 
 } // namespace cfg

@@ -1,3 +1,4 @@
+#include <algorithm>
 #include <regex>
 
 #include "Lexer.hpp"
@@ -25,8 +26,14 @@ namespace cfg {
         return res;
     }
 
+    static bool containsOnlyWhitespace(const std::string &between_string) {
+        static const std::string WHITESPACE = " \t";
+        return std::find_if(between_string.begin(), between_string.end(),
+            [] (const char c) { return WHITESPACE.find(c) == std::string::npos; }) == between_string.end();
+    }
+
     std::vector<Token> lex(const std::string &line) {
-        static const std::regex regex("((€)|(\\|)|(\\->)|(\\*>)|(\"(([^\"\\\\€]|\\\\\"|\\\\'|\\\\\\\\|\\\\n|\\\\t)*)\"|'(([^'\\\\€]|\\\\'|\\\\\"|\\\\\\\\|\\\\n|\\\\t)*)')|(\\w+)|(#[\\w\\d]*))");
+        static const std::regex regex("((€)|(\\|)|(\\->)|(/>)|(\\*>)|(\"(([^\"\\\\€]|\\\\\"|\\\\'|\\\\\\\\|\\\\n|\\\\t)*)\"|'(([^'\\\\€]|\\\\'|\\\\\"|\\\\\\\\|\\\\n|\\\\t)*)')|(\\w+)|(#[\\w\\d]*))");
 
         std::smatch match;
         std::vector<Token> tokens;
@@ -35,7 +42,14 @@ namespace cfg {
 
         while (std::regex_search(cur, match, regex)) {
             std::string elem = match.str();
+
+            std::string between_string = cur.substr(0, cur.find(elem));
+            if (!containsOnlyWhitespace(between_string)) {
+                throw std::runtime_error("Lexer Error at '" + between_string + "'.");
+            }
+
             cur = match.suffix();
+
             if (elem.at(0) == '#') { // ignore comment
                 continue;
             } else if (elem == "€") {
@@ -43,7 +57,9 @@ namespace cfg {
             } else if (elem == "->") {
                 tokens.push_back({ elem, Token::Type::ARROW });
             } else if (elem == "*>") {
-                tokens.push_back({ elem, Token::Type::PREFER_ARROW });
+                tokens.push_back({ elem, Token::Type::STAR_ARROW });
+            } else if (elem == "/>") {
+                tokens.push_back({ elem, Token::Type::SLASH_ARROW });
             } else if (elem == "|") {
                 tokens.push_back({ elem, Token::Type::PIPE });
             } else if (elem.find_first_of("\"'") == std::string::npos) {
@@ -51,6 +67,10 @@ namespace cfg {
             } else {
                 tokens.push_back({ cleanupString(elem), Token::Type::STRING });
             }
+        }
+
+        if (!containsOnlyWhitespace(cur)) {
+            throw std::runtime_error("Lexer Error at '" + cur + "'.");
         }
 
         return tokens;

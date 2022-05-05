@@ -1,0 +1,41 @@
+Example:
+
+<rule> ::= { <1> | <2> } | { { <3> } <4> [ <5> { <6> } ] }
+
+# Gives the following:
+
+<rule> ::= { <1> | <2> }
+<rule> ::= { {<3>} <4> [ <5> {<6>} ] }
+
+prediction steps for rule:
+
+<rule> -> * resolve( <1> | <2> ) { <1> | <2> }
+       |
+       -> * <1> { <1> | <2> }   # loop taken, predict <1>
+       -> * <2> { <1> | <2> }   # loop taken, predict <2>
+       |
+       -> *                     # loop not taken, end of rule
+
+<rule> -> * resolve ( {<3>} <4> [ <5> {<6>} ] )
+       |
+       -> * <3> {<3>} <4> [ <5> {<6>} ]     # loop taken, predict loop <3> taken
+       -> * <4> [ <5> {<6>} ]               # loop taken, predict loop <3> not taken
+       |
+       -> *                                 # loop not taken
+
+# Alternative Approach (transform EBNF -> CFG):
+
+<rule> ::= { <1> | <2> } | { {<3>} <4> [ <5> {<6>} ] }
+|
+<rule> -> resolve ( { <1> | <2> } )
+<rule> -> resolve ( { {<3>} <4> [ <5> {<6>} ] } )
+|
+<rule> -> <rule[1]>
+    <rule[1]> -> resolve({ <1> | <2> })
+    |
+    <rule[1]> -> <1> <rule[1]>
+    <rule[1]> -> <2> <rule[1]>
+    <rule[1]> -> €
+|
+<rule> -> <rule[2]>
+    <rule[2]> -> 

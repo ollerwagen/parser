@@ -14,7 +14,8 @@ namespace cfg {
             EPSILON,        // €
             PIPE,           // |
             ARROW,          // ->
-            PREFER_ARROW    // *>
+            STAR_ARROW,     // *>
+            SLASH_ARROW,    // />
         } type;
     };
 

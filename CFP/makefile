@@ -12,4 +12,4 @@ OFLAGS = -O
 FLAGS = $(CFLAGS) $(WFLAGS) $(OFLAGS)
 
 make:
-	$(COMPILER) -o cyk -I $(HEADERS) $(SOURCES)/*.cpp $(FLAGS)
+	$(COMPILER) -o parser -I $(HEADERS) $(SOURCES)/*.cpp $(FLAGS)

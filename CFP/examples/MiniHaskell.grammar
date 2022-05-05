@@ -1,17 +1,15 @@
-!! 0.0
-
 S -> V Term V
 
 Term *> Variable | Lambda | True | False | IsZero | Integer | Fst | Snd
 Term -> Application | Sum | Product | IfElse | Tuple
 
-Variable    -> Character | Character Variable
+Variable    *> Character | Character Variable
 Lambda      -> V "(\\" V Variable V "->" V Term V ")" V
 Application -> V "(" V Term W Term V ")" V
 True        -> V "True" V
 False       -> V "False" V
 IsZero      -> V "(" V "iszero" W Term V ")" V
-Integer     -> Digit | Digit Integer
+Integer     *> Digit | Digit Integer
 Sum         -> V "(" V Term V "+" V Term V ")" V
 Product     -> V "(" V Term V "*" V Term V ")" V
 IfElse      -> V "(" V "if" W Term W "then" W Term W "else" W Term V ")" V
@@ -27,7 +25,7 @@ Character -> '_'
 
 Digit -> '0' | '1' | '2' | '3' | '4' | '5' | '6' | '7' | '8' | '9'
 
-V -> € | W
-W -> WSChar | WSChar W
+V /> € | W
+W /> WSChar | WSChar W
 
 WSChar -> ' '

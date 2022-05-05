@@ -32,6 +32,7 @@ int main(int argc, char **argv) {
         parser->initGrammar(argv[2]);
     } catch (std::runtime_error &e) {
         std::cout << "Grammar Parse Error: " << e.what() << '\n';
+        return 1;
     }
 
     std::string line;
