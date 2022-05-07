@@ -3,6 +3,7 @@
 #include <map>
 #include <string>
 #include <tuple>
+#include <unordered_map>
 #include <vector>
 
 #include "Lexer.hpp"
@@ -45,6 +46,8 @@ namespace cfg {
         std::vector<ProductionTree> subtrees;
     };
 
+    constexpr char CLEAR_RULE = '&', DELETE_RULE = '%';
+
     std::vector<Terminal> toTerminals(const std::string &s);
 
     std::map<Nonterminal, bool> getTerminateMap(const Grammar &g);
@@ -60,7 +63,10 @@ namespace cfg {
 
     private:
 
-        Grammar g, fullresolveRules, deleteRules;
+        using omit = int8_t;
+
+        Grammar g, fullresolveRules;
+        std::unordered_map<Nonterminal, omit> clearProductions, deleteProductions;
 
         std::map<Nonterminal, bool> termination_map;
 
@@ -70,7 +76,7 @@ namespace cfg {
     private:
 
         Nonterminal addNonterminal(const std::string &name);
-        std::vector<std::tuple<Token::Type, Nonterminal, Rule>> parseProductionRule(const std::string &line);
+        std::vector<std::tuple<Token::Type, Nonterminal, Rule, char>> parseProductionRule(const std::string &line);
 
         std::string getNonterminalName(Nonterminal n) const;
 
@@ -93,6 +99,7 @@ namespace cfg {
         GrammarManager toCNF() const;
 
         ProductionTree refineTree(const ProductionTree &tree);
+        std::string printTree(const ProductionTree &tree, const std::string indent = "");
 
         std::string debugInfo();
     };

@@ -14,7 +14,7 @@
 
 namespace cfg {
 
-    static const std::tuple<Token::Type, Nonterminal, Rule> FAIL_RULE = { Token::Type::ARROW, UINT_MAX, {} };
+    static const std::tuple<Token::Type, Nonterminal, Rule, char> FAIL_RULE = { Token::Type::ARROW, UINT_MAX, {}, '\0' };
 
     static bool containsNoCode(const std::string &line) {
         static const std::string WHITESPACE = " \t";
@@ -93,7 +93,7 @@ namespace cfg {
         }
     }
 
-    std::vector<std::tuple<Token::Type, Nonterminal, Rule>> GrammarManager::parseProductionRule(const std::string &line) {
+    std::vector<std::tuple<Token::Type, Nonterminal, Rule, char>> GrammarManager::parseProductionRule(const std::string &line) {
         std::vector<Token> tokens = lex(line);
         std::size_t index = 0;
 
@@ -119,15 +119,21 @@ namespace cfg {
 
         try {
             Token nonterminal_token = expect(Token::Type::NONTERMINAL);
-            Nonterminal rule_index = addNonterminal(nonterminal_token.text);
-            Token::Type arrowType = select(3, Token::Type::ARROW, Token::Type::STAR_ARROW, Token::Type::SLASH_ARROW).type;
 
-            std::vector<std::tuple<Token::Type, Nonterminal, Rule>> res;
+            const char first = nonterminal_token.text.front();
+            if (first == CLEAR_RULE || first == DELETE_RULE) {
+                nonterminal_token.text = nonterminal_token.text.substr(1);
+            }
+
+            Nonterminal rule_index = addNonterminal(nonterminal_token.text);
+            Token::Type arrowType = select(2, Token::Type::ARROW, Token::Type::STAR_ARROW).type;
+
+            std::vector<std::tuple<Token::Type, Nonterminal, Rule, char>> res;
 
             while (inBounds()) {
                 if (peek().type == Token::Type::EPSILON) {
                     advance();
-                    res.push_back({ arrowType, rule_index, {} });
+                    res.push_back({ arrowType, rule_index, {}, first });
                     if (inBounds()) { expect(Token::Type::PIPE); }
                     continue;
                 }
@@ -152,7 +158,7 @@ namespace cfg {
                     }
                 }
 
-                res.push_back({ arrowType, rule_index, rule_production });
+                res.push_back({ arrowType, rule_index, rule_production, first });
             }
 
             return res;
@@ -167,13 +173,15 @@ namespace cfg {
         for (const auto &it : nonterminal_index_map) {
             if (it.second == n) { return it.first; }
         }
-        return "";
+        return std::to_string(n);
     }
 
     void GrammarManager::reset() {
         g.clear();
         fullresolveRules.clear();
-        deleteRules.clear();
+
+        clearProductions.clear();
+        deleteProductions.clear();
 
         nonterminal_index_map[START_SYMBOL] = 0;
         nonterminal_maxindex = 1;
@@ -193,7 +201,6 @@ namespace cfg {
     GrammarManager::GrammarManager(const GrammarManager &other) {
         g = other.g;
         fullresolveRules = other.fullresolveRules;
-        deleteRules = other.deleteRules;
 
         nonterminal_index_map = other.nonterminal_index_map;
         nonterminal_maxindex = other.nonterminal_maxindex;
@@ -208,21 +215,27 @@ namespace cfg {
                 continue;
             }
 
-            auto newrules = parseProductionRule(line);
+            std::vector<std::tuple<Token::Type, Nonterminal, Rule, char>> newrules = parseProductionRule(line);
 
             for (const auto &r : newrules) {
                 if (r == FAIL_RULE) {
                     std::cerr << "Error in Line " << line_number << '\n';
                 } else {
-                    g[std::get<1>(r)].push_back(std::get<2>(r));
-                    switch (std::get<0>(r)) {
-                        case Token::Type::STAR_ARROW:
-                            fullresolveRules[std::get<1>(r)].push_back(std::get<2>(r));
+                    const Token::Type type = std::get<0>(r);
+                    const Nonterminal from = std::get<1>(r);
+                    const Rule rule = std::get<2>(r);
+                    const char first = std::get<3>(r);
+                    g[from].push_back(rule);
+                    if (type == Token::Type::STAR_ARROW) {
+                        fullresolveRules[from].push_back(rule);
+                    }
+
+                    switch (first) {
+                        case CLEAR_RULE:
+                            clearProductions[from] = 0;
                             break;
-                        case Token::Type::SLASH_ARROW:
-                            deleteRules[std::get<1>(r)].push_back(std::get<2>(r));
-                            break;
-                        default:
+                        case DELETE_RULE:
+                            deleteProductions[from] = 0;
                             break;
                     }
                 }
@@ -233,7 +246,7 @@ namespace cfg {
 
         std::pair<bool, std::string> grammarCheck = checkGrammar();
         if (!grammarCheck.first) {
-            throw new std::runtime_error(grammarCheck.second);
+            throw std::runtime_error(grammarCheck.second);
         }
     }
 
@@ -321,43 +334,89 @@ namespace cfg {
         }
     }
 
-    ProductionTree GrammarManager::refineTree(const ProductionTree &tree) {
-        ProductionTree tmp = tree;
+    ProductionTree GrammarManager::refineTree(const ProductionTree &tree) {        
+        ProductionTree tmp = { tree.from, tree.rule, std::vector<ProductionTree>{} };
 
-        // special rule deletion is top-down recursive, not bottom-up
-        for (unsigned i = 0, j = 0; i < tmp.rule.size(); i++) {
-            if (!tmp.rule.at(i).isTerminal) {
-                if (deleteRules.find(tmp.rule.at(i).n) != deleteRules.end() &&
-                        contains(deleteRules.at(tmp.rule.at(i).n), tmp.subtrees.at(j).rule)) {
-                    tmp.rule.erase(tmp.rule.begin() + i--);
-                    tmp.subtrees.erase(tmp.subtrees.begin() + j);
-                } else {
-                    j++;
-                }
+        for (const ProductionTree &t : tree.subtrees) {
+            if (clearProductions.find(t.from) != clearProductions.end() ||
+                    deleteProductions.find(t.from) != deleteProductions.end()) {
+                tmp.subtrees.push_back(ProductionTree{ t.from, Rule{}, std::vector<ProductionTree>{} });
+            } else {
+                tmp.subtrees.push_back(refineTree(t));
             }
         }
+        
+        ProductionTree res = { tmp.from, Rule{}, std::vector<ProductionTree>{} };
 
-        for (ProductionTree &t : tmp.subtrees) {
-            t = refineTree(t);
-        }
-
-        if (fullresolveRules.find(tree.from) != fullresolveRules.end() &&
-                contains(fullresolveRules.at(tree.from), tree.rule)) {
-            ProductionTree res = { tree.from, {}, {} };
-            unsigned subtree_index = 0;
-            for (const Symbol &s : tree.rule) {
+        if (fullresolveRules.find(tmp.from) != fullresolveRules.end() &&
+                contains(fullresolveRules.at(tmp.from), tmp.rule)) {
+            unsigned subtree_i = 0;
+            for (const Symbol &s : tmp.rule) {
                 if (s.isTerminal) {
                     res.rule.push_back(s);
                 } else {
-                    res.rule.insert(res.rule.end(), tmp.subtrees.at(subtree_index).rule.begin(), tmp.subtrees.at(subtree_index).rule.end());
-                    res.subtrees.insert(res.subtrees.end(), tmp.subtrees.at(subtree_index).subtrees.begin(), tmp.subtrees.at(subtree_index).subtrees.end());
-                    subtree_index++;
+                    const ProductionTree &subtree = tmp.subtrees.at(subtree_i++);
+                    res.rule.insert(res.rule.end(), subtree.rule.begin(), subtree.rule.end());
+                    res.subtrees.insert(res.subtrees.end(), subtree.subtrees.begin(), subtree.subtrees.end());
                 }
             }
-            return res;
         } else {
-            return tmp;
+            res = tmp;
         }
+
+        tmp = res;
+        res = { tmp.from, Rule{}, std::vector<ProductionTree>{} };
+
+        unsigned subtree_i = 0;
+        for (const Symbol &s : tmp.rule) {
+            if (s.isTerminal) {
+                res.rule.push_back(s);
+            } else {
+                if (deleteProductions.find(s.n) == deleteProductions.end()) {
+                    res.rule.push_back(s);
+                    res.subtrees.push_back(tmp.subtrees.at(subtree_i));
+                }
+                subtree_i++;
+            }
+        }
+
+        return res;
+    }
+
+    std::string GrammarManager::printTree(const ProductionTree &tree, const std::string indent) {
+        std::stringstream stream;
+
+        stream << indent << getNonterminalName(tree.from) << " -> ";
+        if (tree.rule.empty()) {
+            stream << "€";
+        } else {
+            stream << "'";
+            for (const Symbol &s : tree.rule) {
+                if (s.isTerminal) {
+                    stream << "\033[31m" << s.t << "\033[0m";
+                } else {
+                    stream << "<" << getNonterminalName(s.n) << ">";
+                }
+            }
+            stream << "'";
+        }
+
+        stream << ":\n";
+        
+        unsigned subtree_ptr = 0;
+        for (const Symbol &s : tree.rule) {
+            if (s.isTerminal) {
+                stream << indent << s.t << '\n';
+            } else {
+                if (subtree_ptr < tree.subtrees.size()) {
+                    stream << printTree(tree.subtrees.at(subtree_ptr++), indent + "    ");
+                } else {
+                    stream << indent << "    <missing tree!!>\n";
+                }
+            }
+        }
+
+        return stream.str();
     }
 
     std::string GrammarManager::debugInfo() {

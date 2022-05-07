@@ -1,0 +1,40 @@
+S -> Nonterminal Assign Production
+
+Production -> SubProduction | SubProduction Or Production
+SubProduction -> Single | Single V SubProduction
+
+Empty -> V '€' V
+
+Single -> Choice | Loop | Group | Nonterminal | String
+
+Choice      -> LBrack Production RBrack
+Loop        -> LBrace Production RBrace
+Group       -> LParen Production RParen
+Nonterminal -> "<" Identifier ">"
+String      -> '"' Terminals '"'
+
+Identifier *> Character | Character Identifier
+
+Terminals *> Terminal | Terminal Terminals
+Terminal *> Character | Digit | SpecialChar
+
+Character   *> 'a' | 'b' | 'c' | 'd' | 'e' | 'f' | 'g' | 'h' | 'i' | 'j' | 'k' | 'l' | 'm'
+Character   *> 'n' | 'o' | 'p' | 'q' | 'r' | 's' | 't' | 'u' | 'v' | 'w' | 'x' | 'y' | 'z'
+Character   *> 'A' | 'B' | 'C' | 'D' | 'E' | 'F' | 'G' | 'H' | 'I' | 'J' | 'K' | 'L' | 'M'
+Character   *> 'N' | 'O' | 'P' | 'Q' | 'R' | 'S' | 'T' | 'U' | 'V' | 'W' | 'X' | 'Y' | 'Z'
+Digit       *> '0' | '1' | '2' | '3' | '4' | '5' | '6' | '7' | '8' | '9'
+SpecialChar *> '+' | '"' | '@' | '#' | '%' | '&' | '/' | '|' | '(' | ')' | '=' | '?' | '\''
+SpecialChar *> '~' | '^' | '!' | '[' | ']' | '{' | '}' | '$' | ',' | ';' | '.' | ':' | '-'
+SpecialChar *> '_' | '<' | '>' | '\\'
+
+&V -> € | ' ' V
+
+&Or -> V '|' V
+&Assign -> V '::=' V
+
+&LBrack -> V '[' V
+&RBrack -> V ']' V
+&LBrace -> V '{' V
+&RBrace -> V '}' V
+&LParen -> V '(' V
+&RParen -> V ')' V

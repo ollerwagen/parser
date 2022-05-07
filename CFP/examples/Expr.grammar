@@ -1,31 +1,156 @@
-!! 0.2
+S -> Expr | StmtList
 
-S -> Expr
+StmtList -> € | Stmt StmtList
 
-Expr -> Unary
+Stmt -> ExprStmt | If | While | DoWhile | Repeat | Decl
+
+If      -> V "if" LParen Expr RParen OptBlock | V "if" LParen Expr RParen OptBlock "else" OptBlock
+While   -> V "while" LParen Expr RParen OptBlock
+DoWhile -> V "do" OptBlock "while" LParen Expr RParen Semicolon
+Repeat  -> V "repeat" LParen Expr RParen OptBlock
+
+ExprStmt -> Expr Semicolon
+
+OptBlock -> Stmt | Semicolon | LBrace StmtList RBrace
+
+Expr -> Bin11 | Ternary | Assign
+
+Assign -> Atom AssignOp Expr
+
+Ternary -> Bin11 QuestionMark Expr Colon Expr
+
+Bin11 -> Bin10 | Bin10 Bin11Op Bin11
+Bin10 -> Bin9 | Bin9 Bin10Op Bin10
+Bin9  -> Bin8 | Bin8 Bin9Op Bin9
+Bin8  -> Bin7 | Bin7 Bin8Op Bin8
+Bin7  -> Bin6 | Bin6 Bin7Op Bin7
+Bin6  -> Bin5 | Bin5 Bin6Op Bin6
+Bin5  -> Bin4 | Bin4 Bin5Op Bin5
+Bin4  -> Bin3 | Bin3 Bin4Op Bin4
+Bin3  -> Bin2 | Bin2 Bin3Op Bin3
+Bin2  -> Bin1 | Bin1 Bin2Op Bin2
+Bin1  -> Bin0 | Bin0 Bin1Op Bin1
+Bin0  -> Unary | Unary Bin0Op Bin0
 
 Unary -> Atom | UnaryOp Unary
-Atom -> LParen Expr RParen | Identifier | Number
+Atom -> SubAtom AtomList
 
-Identifier -> V Character SubIdCharList V
-Number -> V Digit SubNumDigitList V
+SubAtom -> LParen Expr RParen | Identifier | Number
+AtomList -> € | Call AtomList | Subscript AtomList | MemberAccess AtomList
 
-SubIdCharList -> € | Character SubIdCharList | Digit SubIdCharList
-SubNumDigitList -> € | Digit SubNumDigitList
+Call -> LParen ArgList RParen
+Subscript -> LBrack Expr RBrack
+MemberAccess -> Dot Identifier
+
+ArgList -> € | NonEmptyArgs
+NonEmptyArgs -> Expr | NonEmptyArgs Comma Expr
+
+Identifier *> V Character SubIdCharList V
+Number *> V NumberType V
+
+NumberType -> Decimal | Octal | Hexadecimal | Binary | Real | Scientific
+
+Decimal *> NonZeroDigit DigitList
+Octal *> OctPrefix OctDigitList
+Hexadecimal *> HexPrefix HexDigit HexDigitList
+Binary *> BinPrefix BinDigit BinDigitList
+Real *> Digit DigitList "." Digit DigitList
+Scientific *> Digit "." Digit DigitList ScientificE ScientificOp Digit DigitList
+
+DigitList *> € | Digit DigitList
+OctPrefix -> "0"
+OctDigitList *> € | OctDigit OctDigitList
+HexDigitList *> € | HexDigit HexDigitList
+HexPrefix -> "0x" | "0X"
+BinDigitList *> € | BinDigit BinDigitList
+BinPrefix -> "0b" | "0B"
+ScientificE *> 'e' | 'E'
+ScientificOp *> € | '+' | '-'
+
+SubIdCharList *> € | Character SubIdCharList | Digit SubIdCharList
 
 UnaryOp -> Minus | Plus
 
-Character -> 'a' | 'b' | 'c' | 'd' | 'e' | 'f' | 'g' | 'h' | 'i' | 'j' | 'k' | 'l' | 'm'
-Character -> 'n' | 'o' | 'p' | 'q' | 'r' | 's' | 't' | 'u' | 'v' | 'w' | 'x' | 'y' | 'z'
+Bin0Op  -> Power
+Bin1Op  -> Times | Divides | Modulo
+Bin2Op  -> Plus | Minus
+Bin3Op  -> Shl | Shr | Sha
+Bin4Op  -> Bitand
+Bin5Op  -> Bitxor
+Bin6Op  -> Bitor
+Bin7Op  -> Spaceship
+Bin8Op  -> Greater | GreaterEqual | Less | LessEqual | Equal | AbsoluteEqual | NotEqual | NotAbsoluteEqual
+Bin9Op  -> And
+Bin10Op -> Xor
+Bin11Op -> Or
 
-Digit -> '0' | NonZeroDigit
-NonZeroDigit -> '1' | '2' | '3' | '4' | '5' | '6' | '7' | '8' | '9'
+AssignOp -> DefaultAssign | AssignPower | AssignTimes | AssignDivides | AssignModulo | AssignPlus | AssignMinus
+AssignOp -> AssignShl | AssignShr | AssignSha | AssignBitand | AssignBitxor | AssignBitor
 
-LParen -> V "(" V
-RParen -> V ")" V
+Character *> 'a' | 'b' | 'c' | 'd' | 'e' | 'f' | 'g' | 'h' | 'i' | 'j' | 'k' | 'l' | 'm'
+Character *> 'n' | 'o' | 'p' | 'q' | 'r' | 's' | 't' | 'u' | 'v' | 'w' | 'x' | 'y' | 'z'
+Character *> 'A' | 'B' | 'C' | 'D' | 'E' | 'F' | 'G' | 'H' | 'I' | 'J' | 'K' | 'L' | 'M'
+Character *> 'N' | 'O' | 'P' | 'Q' | 'R' | 'S' | 'T' | 'U' | 'V' | 'W' | 'X' | 'Y' | 'Z'
+Character *> '$' | '_'
 
-Minus -> V "-" V
-Plus -> V "+" V
+Digit *> '0' | NonZeroDigit
+NonZeroDigit *> '1' | '2' | '3' | '4' | '5' | '6' | '7' | '8' | '9'
+OctDigit *> '0' | '1' | '2' | '3' | '4' | '5' | '6' | '7'
+HexDigit *> Digit | 'a' | 'b' | 'c' | 'd' | 'e' | 'f' | 'A' | 'B' | 'C' | 'D' | 'E' | 'F'
+BinDigit *> '0' | '1'
 
-V -> € | ' ' V
-W -> ' ' | ' ' W
+&LParen -> V "(" V
+&RParen -> V ")" V
+&LBrack -> V "[" V
+&RBrack -> V "]" V
+&LBrace -> V "{" V
+&RBrace -> V "}" V
+
+&Power            -> V "**" V
+&Times            -> V "*" V
+&Divides          -> V "/" V
+&Modulo           -> V "%" V
+&Minus            -> V "-" V
+&Plus             -> V "+" V
+&Shl              -> V "<<" V
+&Shr              -> V ">>>" V
+&Sha              -> V ">>" V
+&Bitand           -> V "&" V
+&Bitxor           -> V "^" V
+&Bitor            -> V "|" V
+&Spaceship        -> V "<=>" V
+&Greater          -> V ">" V
+&GreaterEqual     -> V ">=" V
+&Less             -> V "<" V
+&LessEqual        -> V "<=" V
+&Equal            -> V "==" V
+&AbsoluteEqual    -> V "===" V
+&NotEqual         -> V "!=" V
+&NotAbsoluteEqual -> V "!==" V
+&And              -> V "&&" V
+&Xor              -> V "^^" V
+&Or               -> V "||" V
+
+&DefaultAssign -> V ":=" V
+&AssignPower   -> V "**=" V
+&AssignTimes   -> V "*=" V
+&AssignDivides -> V "/=" V
+&AssignModulo  -> V "%=" V
+&AssignPlus    -> V "+=" V
+&AssignMinus   -> V "-=" V
+&AssignShl     -> V "<<=" V
+&AssignShr     -> V ">>>=" V
+&AssignSha     -> V ">>=" V
+&AssignBitand  -> V "&=" V
+&AssignBitxor  -> V "^=" V
+&AssignBitor   -> V "|=" V
+
+&QuestionMark -> V "?" V
+&Colon -> V ":" V
+
+&Dot -> V "." V
+&Comma -> V "," V
+&Semicolon -> V ";" V
+
+%V -> € | ' ' V
+%W -> ' ' | ' ' W

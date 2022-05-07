@@ -15,7 +15,6 @@ namespace cfg {
             PIPE,           // |
             ARROW,          // ->
             STAR_ARROW,     // *>
-            SLASH_ARROW,    // />
         } type;
     };
 

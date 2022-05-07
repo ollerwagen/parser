@@ -117,7 +117,7 @@ namespace cfg {
     static bool scan(const Grammar &g, const String &input, Table &DP, unsigned col, unsigned row);
     static void scanExtra(const Grammar &g, const String &input, Table &DP, unsigned col, unsigned row, const std::map<Nonterminal, bool> &nullable_map);
     static bool complete(const Grammar &g, const String &input, Table &DP, unsigned col, unsigned row);
-    static void removeDuplicates(Table &DP, const unsigned col);
+    static void removeDuplicates(Table &DP, const unsigned col) {}
 
     static bool predict(const Grammar &g, const String &input, Table &DP, unsigned col, unsigned row) {
         const EarleyItem entry = DP.at(col).at(row);
@@ -136,7 +136,10 @@ namespace cfg {
 
         // predict all production rules from the item
         for (const Rule &r : g.at(entry.post.front().n)) {
-            DP.at(col).push_back(EarleyItem{ col, entry.post.front().n, {}, r, EarleyItem::DerivationType::PREDICT, { { col, row }, { 0, 0 } } });
+            EarleyItem next_item = { col, entry.post.front().n, {}, r, EarleyItem::DerivationType::PREDICT, { { col, row }, { 0, 0 } } };
+            if (!contains(DP.at(col), next_item)) {
+                DP.at(col).push_back(next_item);
+            }
         }
         return true;
     }
@@ -150,7 +153,10 @@ namespace cfg {
         }
 
         if (input.at(col) == entry.post.front().t) {
-            DP.at(col + 1).push_back(EarleyItem{ entry.start, entry.from, entry.pre + entry.post.front(), Symbols(entry.post.begin() + 1, entry.post.end()), EarleyItem::DerivationType::SCAN, { { col, row }, { 0, 0 } } });
+            EarleyItem next_item = { entry.start, entry.from, entry.pre + entry.post.front(), Symbols(entry.post.begin() + 1, entry.post.end()), EarleyItem::DerivationType::SCAN, { { col, row }, { 0, 0 } } };
+            if (!contains(DP.at(col + 1), next_item)) {
+                DP.at(col + 1).push_back(next_item);
+            }
             return true;
         }
 
@@ -160,9 +166,11 @@ namespace cfg {
     static void scanExtra(const Grammar &g, const String &input, Table &DP, unsigned col, unsigned row, const std::map<Nonterminal, bool> &nullable_map) {
         const EarleyItem entry = DP.at(col).at(row);
 
-        for (auto it = entry.post.begin(); it != entry.post.end(); ++it) {
-            if (it->isTerminal || !nullable_map.at(it->n)) { break; }
-            DP.at(col).push_back(EarleyItem{ entry.start, entry.from, entry.pre + Symbols(entry.post.begin(), it + 1), Symbols(it + 1, entry.post.end()), EarleyItem::DerivationType::NULLABLE_SCAN, { { col, row }, { 0, 0 } } });
+        if (!entry.post.empty() && !entry.post.front().isTerminal && nullable_map.at(entry.post.front().n)) {
+            EarleyItem next_item = { entry.start, entry.from, entry.pre + entry.post.front(), Symbols(entry.post.begin() + 1, entry.post.end()), EarleyItem::DerivationType::NULLABLE_SCAN, { { col, row }, { 0, 0 } } };
+            if (!contains(DP.at(col), next_item)) {
+                DP.at(col).push_back(next_item);
+            }
         }
     }
 
@@ -176,7 +184,10 @@ namespace cfg {
         for (unsigned i = 0; i < DP.at(entry.start).size(); i++) {
             const EarleyItem &before_entry = DP.at(entry.start).at(i);
             if (!before_entry.post.empty() && before_entry.post.front() == Symbol{ false, { .n = entry.from } }) {
-                DP.at(col).push_back({ before_entry.start, before_entry.from, before_entry.pre + before_entry.post.front(), Symbols(before_entry.post.begin() + 1, before_entry.post.end()), EarleyItem::DerivationType::COMPLETE, { { entry.start, i }, { col, row } } });
+                EarleyItem next_item = { before_entry.start, before_entry.from, before_entry.pre + before_entry.post.front(), Symbols(before_entry.post.begin() + 1, before_entry.post.end()), EarleyItem::DerivationType::COMPLETE, { { entry.start, i }, { col, row } } };
+                if (!contains(DP.at(col), next_item)) {
+                    DP.at(col).push_back(next_item);
+                }
             } 
         }
 
@@ -184,7 +195,7 @@ namespace cfg {
     }
 
     static std::string printTable(const Table &DP, const std::vector<Terminal> &input) {
-        static constexpr unsigned LEN = 45;
+        static constexpr unsigned LEN = 70;
 
         std::stringstream stream;
 
@@ -285,32 +296,8 @@ namespace cfg {
         }
 
         std::reverse(result.subtrees.begin(), result.subtrees.end());
+
         return result;
-    }
-
-    static std::string printTree(const Nonterminal n, const ProductionTree &tree, std::string indent = "") {
-        std::stringstream stream;
-
-        stream << indent << n << " -> ";
-        for (const Symbol &s : tree.rule) {
-            if (s.isTerminal) {
-                stream << s.t;
-            } else {
-                stream << "<" << s.n << ">";
-            }
-        }
-        stream << " :\n";
-        
-        unsigned subtree_ptr = 0;
-        for (const Symbol &s : tree.rule) {
-            if (s.isTerminal) {
-                stream << indent << s.t << '\n';
-            } else {
-                stream << printTree(s.n, tree.subtrees.at(subtree_ptr++), indent + "    ");
-            }
-        }
-
-        return stream.str();
     }
 
     EarleyParser::EarleyParser() {}
@@ -350,8 +337,9 @@ namespace cfg {
         }
 
         ProductionTree tree = backtrack(gm.g, DP, *it);
+        std::cout << gm.printTree(tree) << "\n\n";
         tree = gm.refineTree(tree);
-        std::cout << printTree(ROOT, tree) << "\n\n";
+        std::cout << gm.printTree(tree) << "\n\n";
         return { true, tree };
     }
 

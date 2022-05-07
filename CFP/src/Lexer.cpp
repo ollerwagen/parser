@@ -33,7 +33,7 @@ namespace cfg {
     }
 
     std::vector<Token> lex(const std::string &line) {
-        static const std::regex regex("((€)|(\\|)|(\\->)|(/>)|(\\*>)|(\"(([^\"\\\\€]|\\\\\"|\\\\'|\\\\\\\\|\\\\n|\\\\t)*)\"|'(([^'\\\\€]|\\\\'|\\\\\"|\\\\\\\\|\\\\n|\\\\t)*)')|(\\w+)|(#[\\w\\d]*))");
+        static const std::regex regex("((€)|(\\|)|(\\->)|(\\*>)|(\"(([^\"\\\\€]|\\\\\"|\\\\'|\\\\\\\\|\\\\n|\\\\t)*)\"|'(([^'\\\\€]|\\\\'|\\\\\"|\\\\\\\\|\\\\n|\\\\t)*)')|([\\&\\%]?\\w+)|(#[\\w\\d]*))");
 
         std::smatch match;
         std::vector<Token> tokens;
@@ -58,8 +58,6 @@ namespace cfg {
                 tokens.push_back({ elem, Token::Type::ARROW });
             } else if (elem == "*>") {
                 tokens.push_back({ elem, Token::Type::STAR_ARROW });
-            } else if (elem == "/>") {
-                tokens.push_back({ elem, Token::Type::SLASH_ARROW });
             } else if (elem == "|") {
                 tokens.push_back({ elem, Token::Type::PIPE });
             } else if (elem.find_first_of("\"'") == std::string::npos) {
